@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR Imagen 1</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+    <!-- MindAR para Image Tracking + A-Frame -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Escena AR -->
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind;"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      embedded
+      id="escena-ar"
+    >
+      <!-- Assets: usamos el video del nivel superior -->
+      <a-assets>
+        <video
+          id="video-recuerdo"
+          src="../video.mp4"
+          preload="auto"
+          webkit-playsinline
+          playsinline
+          crossorigin="anonymous"
+          loop
+          muted
+        ></video>
+      </a-assets>
+
+      <a-camera
+        position="0 0 0"
+        look-controls="enabled: false"
+      ></a-camera>
+
+      <!-- ÚNICO target: el targetIndex 0 de ESTE targets.mind -->
+      <a-entity id="target-video" mindar-image-target="targetIndex: 0">
+        <a-plane
+          id="video-plane"
+          position="0 0 0"
+          rotation="0 0 0"
+          width="1"
+          height="0.56"
+          material="src: #video-recuerdo; side: double"
+        ></a-plane>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const target = document.querySelector("#target-video");
+        const video = document.querySelector("#video-recuerdo");
+
+        // Activar audio y reproducción tras primer toque (requisito en iPhone)
+        const enableAudioOnce = () => {
+          video.muted = false;
+          video.play().catch(() => {});
+          window.removeEventListener("click", enableAudioOnce);
+        };
+        window.addEventListener("click", enableAudioOnce);
+
+        target.addEventListener("targetFound", () => {
+          console.log("✅ targetFound (imagen1)");
+          video.play().catch(() => {});
+        });
+
+        target.addEventListener("targetLost", () => {
+          console.log("ℹ️ targetLost (imagen1)");
+          video.pause();
+        });
+      });
+    </script>
+  </body>
+</html>
