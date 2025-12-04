@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR Recuerdos</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+    <!-- MindAR para Image Tracking + A-Frame -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Escena AR -->
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind;"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      embedded
+      id="escena-ar"
+    >
+      <!-- Assets: aquí pre-cargamos el video -->
+      <a-assets>
+        <!-- Asegúrate de que el nombre del archivo coincide -->
+        <video
+          id="video-recuerdo"
+          src="./video.mp4"
+          preload="auto"
+          webkit-playsinline
+          playsinline
+          crossorigin="anonymous"
+          loop
+          muted
+        ></video>
+      </a-assets>
+
+      <!-- Cámara -->
+      <a-camera
+        position="0 0 0"
+        look-controls="enabled: false"
+      ></a-camera>
+
+      <!-- Contenedor donde vamos a crear los 23 targets -->
+      <a-entity id="targets-container"></a-entity>
+    </a-scene>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const container = document.querySelector("#targets-container");
+        const video = document.querySelector("#video-recuerdo");
+
+        // Habilitar audio después del primer toque del usuario (requisito en móviles)
+        let userInteracted = false;
+        const enableAudioOnce = () => {
+          userInteracted = true;
+          video.muted = false;
+          video.play().catch(() => {});
+          window.removeEventListener("click", enableAudioOnce);
+        };
+        window.addEventListener("click", enableAudioOnce);
+
+        const NUM_TARGETS = 23; // tienes 23 imágenes
+
+        for (let i = 0; i < NUM_TARGETS; i++) {
+          // Crear una entidad target para cada imagen
+          const targetEntity = document.createElement("a-entity");
+          targetEntity.setAttribute(
+            "mindar-image-target",
+            `targetIndex: ${i}`
+          );
+
+          // Plano donde se mostrará el video
+          const plane = document.createElement("a-plane");
+          plane.setAttribute("position", "0 0 0");
+          plane.setAttribute("rotation", "0 0 0");
+          plane.setAttribute("width", "1");
+          plane.setAttribute("height", "0.56");
+          plane.setAttribute(
+            "material",
+            "src: #video-recuerdo; side: double"
+          );
+
+          targetEntity.appendChild(plane);
+          container.appendChild(targetEntity);
+
+          // Eventos para reproducir/pausar el video cuando se ve la imagen
+          targetEntity.addEventListener("targetFound", () => {
+            console.log("Target encontrado", i);
+            video.play().catch(() => {});
+          });
+
+          targetEntity.addEventListener("targetLost", () => {
+            console.log("Target perdido", i);
+            video.pause();
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
